@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.routes import router
+from api.routes import router
 from app.config import settings
 
 # 创建FastAPI应用实例

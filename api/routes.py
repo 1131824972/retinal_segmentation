@@ -1,13 +1,11 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from fastapi.responses import FileResponse
 import os
-from app.models.image import ImageResponse
-from app.services.storage import StorageService
-from app.services.segmentation import SegmentationService
-from app.utils.preprocessing import preprocess_image
+from models.image import ImageResponse
+from services.storage import StorageService
+from services.segmentation import SegmentationService
 from app.config import settings
 import cv2
-import numpy as np
 
 router = APIRouter()
 
