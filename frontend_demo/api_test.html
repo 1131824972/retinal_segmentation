@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>后端API测试页面</title>
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .upload-area { border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 20px 0; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🩺 视网膜分割API测试</h1>
+
+        <div class="upload-area">
+            <input type="file" id="imageInput" accept=".png,.jpg,.jpeg,.tiff">
+            <button onclick="uploadImage()">上传并测试</button>
+        </div>
+
+        <div id="result" class="result" style="display:none;"></div>
+
+        <div>
+            <h3>测试接口：</h3>
+            <button onclick="testHealth()">健康检查</button>
+            <button onclick="testModelInfo()">模型信息</button>
+        </div>
+    </div>
+
+    <script>
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            if (!fileInput.files[0]) return alert('请选择图像文件');
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/upload/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                showResult(result);
+            } catch (error) {
+                showResult({ status: 'error', message: '请求失败: ' + error.message });
+            }
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const result = await response.json();
+                showResult(result);
+            } catch (error) {
+                showResult({ status: 'error', message: '健康检查失败' });
+            }
+        }
+
+        async function testModelInfo() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/model/info');
+                const result = await response.json();
+                showResult(result);
+            } catch (error) {
+                showResult({ status: 'error', message: '获取模型信息失败' });
+            }
+        }
+
+        function showResult(result) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = `result ${result.status === 'success' ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        }
+    </script>
+</body>
+</html>
