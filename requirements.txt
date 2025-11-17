@@ -1,0 +1,20 @@
+# Web框架
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+
+# 图像处理
+opencv-python==4.8.1.78
+pillow==11.3.0
+
+# 数据处理
+numpy==1.24.3
+
+# 环境配置
+python-dotenv==1.0.0
+
+# 开发工具
+pytest==7.4.0
+httpx==0.25.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
