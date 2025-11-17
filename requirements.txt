@@ -1,7 +1,15 @@
-# Web框架
+# Web 框架
 fastapi==0.104.1
 uvicorn==0.24.0
 python-multipart==0.0.6
+
+# 数据库
+pymongo==4.15.4
+dnspython==2.8.0
+
+# 用户密码处理
+passlib==1.7.4
+bcrypt==5.0.0
 
 # 图像处理
 opencv-python==4.8.1.78
@@ -10,10 +18,17 @@ pillow==11.3.0
 # 数据处理
 numpy==1.24.3
 
-# 环境配置
+# 配置管理
 python-dotenv==1.0.0
 
-# 开发工具
+# 数据模型
+pydantic==2.4.0
+pydantic_core==2.10.0
+pydantic-settings>=2.0.0
+
+# 系统工具
+psutil==7.1.2
+
+# 开发测试
 pytest==7.4.0
 httpx==0.25.0
-pydantic==1.10.12
