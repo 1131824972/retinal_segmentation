@@ -9,6 +9,17 @@ import uuid
 import redis.asyncio as aredis
 from fastapi_limiter import FastAPILimiter
 
+from core.database import init_db
+from api.endpoints import routes_user, routes_image, routes_prediction
+
+app = FastAPI(title="Retinal Segmentation Backend (FastAPI + MongoDB)")
+
+init_db()  # 初始化 MongoDB 索引等
+
+app.include_router(routes_user.router)
+app.include_router(routes_image.router)
+app.include_router(routes_prediction.router)
+
 # 导入配置
 from core.config import settings
 # 导入路由
@@ -184,6 +195,10 @@ async def redirect_to_docs():
     """重定向到API文档"""
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/docs")
+
+@app.get("/")
+def root():
+    return {"message": "Retinal Segmentation API Running"}
 
 
 if __name__ == "__main__":
