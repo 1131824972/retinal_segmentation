@@ -6,6 +6,9 @@ import uvicorn
 import time
 import uuid
 
+import redis.asyncio as aredis
+from fastapi_limiter import FastAPILimiter
+
 # 导入配置
 from core.config import settings
 # 导入路由
@@ -90,6 +93,15 @@ async def startup_event():
     logger.info(f"📋 项目: {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"🌍 环境: {settings.ENVIRONMENT}")
     logger.info(f"🔧 调试模式: {settings.DEBUG}")
+    try:
+        # 假设 Redis 运行在本地默认端口
+        redis_conn = aredis.from_url("redis://localhost:6379", encoding="utf-8", decode_responses=True)
+        await FastAPILimiter.init(redis_conn)
+        logger.info("✅ 成功连接到 Redis 并初始化 API 限流器")
+    except Exception as e:
+        logger.error(f"❌ 连接 Redis 或初始化限流器失败: {e}")
+        # 在开发中可以先不退出，但在生产中可能需要
+        # raise e
 
     # 模拟模型加载
     from services.model_service import model_service

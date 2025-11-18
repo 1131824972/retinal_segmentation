@@ -4,12 +4,33 @@ import numpy as np
 from typing import Dict, Any, Optional
 import uuid
 from datetime import datetime
-
+import os
+import random
+import cv2
 from core.config import settings
 from utils.image_utils import create_mock_segmentation, image_to_base64
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
+# 定义 mock 数据目录的路径
+MOCK_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'mock_data')
+MOCK_MASKS = []
+
+# 启动时就加载所有可用的 mock 掩码路径
+if os.path.exists(MOCK_DATA_DIR):
+    try:
+        MOCK_MASKS = [
+            os.path.join(MOCK_DATA_DIR, f)
+            for f in os.listdir(MOCK_DATA_DIR)
+            if f.endswith(('.png', '.jpg', '.tiff','.gif'))
+        ]
+        if MOCK_MASKS:
+            logger.info(f"✅ 成功加载 {len(MOCK_MASKS)} 个模拟掩码文件")
+        else:
+            logger.warning("⚠️ mock_data 目录为空，模拟预测将失败")
+    except Exception as e:
+        logger.error(f"❌ 加载模拟掩码失败: {e}")
 
 class ModelService:
     """模型服务类 - 管理AI模型的加载和预测（当前为模拟版本）"""
@@ -77,13 +98,7 @@ class ModelService:
     async def predict(self, image: np.ndarray, request_id: str) -> Dict[str, Any]:
         """
         进行血管分割预测（模拟实现）
-
-        Args:
-            image: 输入图像
-            request_id: 请求ID用于追踪
-
-        Returns:
-            预测结果字典
+        *** 已升级：返回 mock_data 中的真实掩码 ***
         """
         if not self.model_loaded:
             return {
@@ -96,29 +111,44 @@ class ModelService:
             start_time = time.time()
             self.prediction_count += 1
 
-            logger.info(f"🔍 开始血管分割预测 [{request_id}]")
+            logger.info(f"🔍 开始血管分割预测 [{request_id}] (模拟)")
             logger.info(f"📐 输入图像尺寸: {image.shape}")
-
-            # 模拟预测处理时间（基于图像大小）
-            base_time = 0.5
-            size_factor = (image.shape[0] * image.shape[1]) / (512 * 512) * 0.5
-            processing_time = base_time + size_factor + (np.random.random() * 0.3)
 
             # 模拟处理过程
             await self._simulate_prediction_processing()
 
-            # 生成模拟分割结果
-            segmentation_mask = create_mock_segmentation(image)
+            if not MOCK_MASKS:
+                logger.error(f"❌ 模拟预测失败: mock_data 目录中没有找到掩码文件")
+                raise Exception("模拟数据未找到")
 
-            # 转换为base64用于返回
+                # 1. 随机选择一个掩码
+            random_mask_path = random.choice(MOCK_MASKS)
+            logger.info(f"🎨 正在使用模拟掩码: {os.path.basename(random_mask_path)}")
+
+            # 2. 【使用 PIL (Pillow) 读取 GIF 文件】
+            pil_image = Image.open(random_mask_path)
+
+            # 3. 【转换为灰度图并转为 NumPy 数组】
+            #    .convert('L') 确保它是单通道灰度图
+            #    np.array(...) 将 PIL 图像转为 cv2 可以处理的 NumPy 数组
+            segmentation_mask = np.array(pil_image.convert('L'))
+
+            if segmentation_mask is None:
+                logger.error(f"❌ 无法读取或转换模拟掩码文件: {random_mask_path}")
+                raise Exception("模拟数据读取失败")
+
+            # 确保掩码和输入图像尺寸一致
+            segmentation_mask = cv2.resize(segmentation_mask, (image.shape[1], image.shape[0]))
+
+
             result_base64 = image_to_base64(segmentation_mask, "png")
 
             actual_time = time.time() - start_time
 
-            # 计算模拟的置信度（基于图像质量和随机因素）
+            # 模拟的置信度和覆盖率
             image_quality = min(1.0, (image.shape[0] * image.shape[1]) / (1000 * 1000))
             confidence = 0.7 + (image_quality * 0.2) + (np.random.random() * 0.1)
-            confidence = min(0.95, confidence)  # 上限95%
+            confidence = min(0.95, confidence)
 
             logger.info(f"✅ 预测完成 [{request_id}] - 耗时: {actual_time:.2f}秒")
             logger.info(f"📊 预测统计 - 置信度: {confidence:.2f}, 总预测次数: {self.prediction_count}")
@@ -126,13 +156,13 @@ class ModelService:
             return {
                 "status": "success",
                 "request_id": request_id,
-                "segmentation_mask": segmentation_mask,
-                "result_image": result_base64,
+                "segmentation_mask": segmentation_mask,  # (这个主要用于内部，非返回)
+                "result_image": result_base64,  # (这个返回给前端)
                 "processing_time": actual_time,
                 "confidence": round(confidence, 3),
                 "vessel_coverage": round(
                     np.sum(segmentation_mask > 0) / (segmentation_mask.shape[0] * segmentation_mask.shape[1]), 4),
-                "message": "血管分割完成（模拟结果）- 等待真实模型集成"
+                "message": "血管分割完成（模拟结果）- 已升级为真实掩码"
             }
 
         except Exception as e:

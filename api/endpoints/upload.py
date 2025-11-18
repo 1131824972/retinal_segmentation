@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import time
@@ -9,6 +9,9 @@ from core.config import settings, ALLOWED_CONTENT_TYPES
 from services.model_service import model_service
 from utils.image_utils import base64_to_image, validate_image_size, format_file_size, get_image_info
 
+from fastapi_limiter.depends import RateLimiter
+
+from .predict import ErrorResponse
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -41,7 +44,15 @@ class ModelInfoResponse(BaseModel):
 @router.post("/upload/predict",
              response_model=FileUploadResponse,
              summary="文件上传预测",
-             description="通过文件上传方式进行视网膜血管分割预测")
+             description="通过文件上传方式进行视网膜血管分割预测",
+             responses={
+                 429: {"model": ErrorResponse}, # (可选)
+             },
+             dependencies=[Depends(RateLimiter(
+                 times=settings.MAX_REQUESTS_PER_MINUTE,
+                 seconds=60
+             ))]
+            )
 async def predict_from_upload(file: UploadFile = File(...)):
     """
     文件流方式上传图像并进行预测
