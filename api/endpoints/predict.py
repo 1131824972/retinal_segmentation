@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 import time
@@ -8,6 +8,8 @@ import uuid
 from core.config import settings
 from services.model_service import model_service
 from utils.image_utils import base64_to_image, validate_image_size, get_image_info
+
+from fastapi_limiter.depends import RateLimiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -61,8 +63,15 @@ class ErrorResponse(BaseModel):
              response_model=PredictionResponse,
              responses={
                  400: {"model": ErrorResponse},
-                 500: {"model": ErrorResponse}
-             })
+                 500: {"model": ErrorResponse},
+                 429: {"model": ErrorResponse}, # (可选) 告诉文档有 429 错误
+             },
+             # 使用 settings 中的配置来限流
+             dependencies=[Depends(RateLimiter(
+                 times=settings.MAX_REQUESTS_PER_MINUTE,
+                 seconds=60
+             ))]
+            )
 async def predict_from_base64(request: Base64PredictionRequest):
     """
     Base64格式图像上传与预测
