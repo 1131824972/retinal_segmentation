@@ -11,6 +11,7 @@ from utils.image_utils import base64_to_image, validate_image_size, get_image_in
 
 from fastapi_limiter.depends import RateLimiter
 
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 

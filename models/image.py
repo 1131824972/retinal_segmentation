@@ -1,3 +1,4 @@
+# models/image.py
 from datetime import datetime
 from core.database import images_collection
 from bson.objectid import ObjectId
@@ -9,15 +10,17 @@ class Image:
         self.image_metadata = image_metadata
         self.uploaded_at = datetime.utcnow()
 
-    def save(self):
-        result = images_collection.insert_one(self.__dict__)
+    async def save(self):
+        result = await images_collection.insert_one(self.__dict__)
         return str(result.inserted_id)
 
     @classmethod
-    def find_by_user(cls, user_id: str):
+    async def find_by_user(cls, user_id: str):
         cursor = images_collection.find({"user_id": user_id})
-        return list(cursor)
+        docs = await cursor.to_list(length=1000)
+        return docs
 
     @classmethod
-    def find_by_id(cls, image_id: str):
-        return images_collection.find_one({"_id": ObjectId(image_id)})
+    async def find_by_id(cls, image_id: str):
+        doc = await images_collection.find_one({"_id": ObjectId(image_id)})
+        return doc

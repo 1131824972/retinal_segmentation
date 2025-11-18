@@ -1,31 +1,42 @@
+# api/endpoints/routes_user.py
 from fastapi import APIRouter, HTTPException
-from models.user import User
+from pydantic import BaseModel, EmailStr
 from passlib.hash import bcrypt
+from models.user import User
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/api/v1/users", tags=["Users"])
+
+
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    username: str = ""
 
 
 @router.post("/register")
-def register_user(username: str, email: str, password: str):
-    """注册新用户"""
-    if User.find_by_email(email):
+async def register_user(payload: UserRegister):
+    exists = await User.find_by_email(payload.email)
+    if exists:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    password_hash = bcrypt.hash(password)
-    user = User(username=username, password_hash=password_hash, email=email)
-    user_id = user.save()
+    password_hash = bcrypt.hash(payload.password)
+    user = User(username=payload.username, password_hash=password_hash, email=payload.email)
+    user_id = await user.save()
+    return {"status": "success", "user_id": user_id}
 
-    return {"user_id": user_id, "message": "User registered successfully"}
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
 
 @router.post("/login")
-def login_user(email: str, password: str):
-    """用户登录"""
-    user_data = User.find_by_email(email)
-    if not user_data:
-        raise HTTPException(status_code=400, detail="User not found")
+async def login_user(payload: UserLogin):
+    user_doc = await User.find_by_email(payload.email)
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    if not bcrypt.verify(password, user_data["password_hash"]):
-        raise HTTPException(status_code=400, detail="Invalid password")
+    if not bcrypt.verify(payload.password, user_doc["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return {"message": "Login successful", "user_id": str(user_data["_id"])}
+    return {"status": "success", "user_id": str(user_doc["_id"])}

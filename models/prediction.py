@@ -1,3 +1,4 @@
+# models/prediction.py
 from datetime import datetime
 from core.database import predictions_collection
 from bson.objectid import ObjectId
@@ -9,11 +10,17 @@ class Prediction:
         self.prediction_data = prediction_data
         self.predicted_at = datetime.utcnow()
 
-    def save(self):
-        result = predictions_collection.insert_one(self.__dict__)
+    async def save(self):
+        result = await predictions_collection.insert_one(self.__dict__)
         return str(result.inserted_id)
 
     @classmethod
-    def find_by_image(cls, image_id: str):
+    async def find_by_image(cls, image_id: str):
         cursor = predictions_collection.find({"image_id": image_id})
-        return list(cursor)
+        docs = await cursor.to_list(length=1000)
+        return docs
+
+    @classmethod
+    async def find_by_id(cls, pid: str):
+        doc = await predictions_collection.find_one({"_id": ObjectId(pid)})
+        return doc
