@@ -10,17 +10,25 @@ class User:
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
-    def save(self):
+    async def save(self):
+        """异步保存用户"""
         user_data = self.__dict__
-        result = users_collection.insert_one(user_data)
+        # 必须使用 await
+        result = await users_collection.insert_one(user_data)
         return str(result.inserted_id)
 
     @classmethod
-    def find_by_email(cls, email: str):
-        data = users_collection.find_one({"email": email})
+    async def find_by_email(cls, email: str):
+        """异步根据邮箱查找"""
+        # 必须使用 await
+        data = await users_collection.find_one({"email": email})
         return data
 
     @classmethod
-    def find_by_id(cls, user_id: str):
-        data = users_collection.find_one({"_id": ObjectId(user_id)})
-        return data
+    async def find_by_id(cls, user_id: str):
+        """异步根据ID查找"""
+        try:
+            data = await users_collection.find_one({"_id": ObjectId(user_id)})
+            return data
+        except:
+            return None
