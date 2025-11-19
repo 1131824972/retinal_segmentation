@@ -3,21 +3,21 @@ from core.database import images_collection
 from bson.objectid import ObjectId
 
 class Image:
-    def __init__(self, user_id: str, image_path: str, image_metadata: dict):
+    def __init__(self, user_id: str, filename: str, file_size: int, content_type: str):
         self.user_id = user_id
-        self.image_path = image_path
-        self.image_metadata = image_metadata
+        self.filename = filename
+        self.file_size = file_size
+        self.content_type = content_type
         self.uploaded_at = datetime.utcnow()
 
-    def save(self):
-        result = images_collection.insert_one(self.__dict__)
+    async def save(self):
+        """异步保存图像记录"""
+        result = await images_collection.insert_one(self.__dict__)
         return str(result.inserted_id)
 
     @classmethod
-    def find_by_user(cls, user_id: str):
+    async def find_by_user(cls, user_id: str):
+        """异步查找用户的所有图像"""
         cursor = images_collection.find({"user_id": user_id})
-        return list(cursor)
-
-    @classmethod
-    def find_by_id(cls, image_id: str):
-        return images_collection.find_one({"_id": ObjectId(image_id)})
+        # motor cursor 需要用 to_list 转换
+        return await cursor.to_list(length=100)
