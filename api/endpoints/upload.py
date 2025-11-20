@@ -4,13 +4,11 @@ from typing import Optional, Dict, Any
 import time
 import logging
 import uuid
-import base64  # 确保导入了 base64
+import base64
 
 from core.config import settings, ALLOWED_CONTENT_TYPES
 from services.model_service import model_service
 from utils.image_utils import base64_to_image, validate_image_size, format_file_size, get_image_info
-
-from fastapi_limiter.depends import RateLimiter
 
 # 1. 导入所需的数据库模型 (确保这些模型已经是异步版本)
 from models.image import Image
@@ -52,19 +50,12 @@ class ModelInfoResponse(BaseModel):
              summary="文件上传预测",
              description="通过文件上传方式进行视网膜血管分割预测",
              responses={
-                 429: {"model": ErrorResponse},  # 限流错误文档
                  500: {"model": ErrorResponse},
                  400: {"model": ErrorResponse},
              },
-             dependencies=[Depends(RateLimiter(
-                 times=settings.MAX_REQUESTS_PER_MINUTE,
-                 seconds=60
-             ))]
              )
 async def predict_from_upload(
         file: UploadFile = File(...),
-        # 3. 新增 user_id 参数，允许前端传递用户ID (可选)
-        # 使用 Form(...) 因为这是文件上传接口，参数在表单中
         user_id: Optional[str] = Form(None)
 ):
     """

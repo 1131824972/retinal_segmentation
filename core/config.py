@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # API配置
     API_V1_STR: str = "/api/v1"
-    PROJECT_DESCRIPTION: str = "基于U-Net的视网膜血管分割后端服务 - 第二次汇报版本"
+    PROJECT_DESCRIPTION: str = "基于U-Net的视网膜血管分割后端服务"
 
     # CORS配置
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "*"]
