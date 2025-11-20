@@ -83,7 +83,7 @@ async def predict_from_base64(request: Base64PredictionRequest):
 
     try:
         # 1. 验证图像格式
-        allowed_formats = ["png", "jpg", "jpeg"]
+        allowed_formats = ["png", "jpg", "jpeg", "gif"]
         if request.image_format.lower() not in allowed_formats:
             raise HTTPException(
                 status_code=400,
