@@ -74,7 +74,22 @@
             const resultDiv = document.getElementById('result');
             resultDiv.style.display = 'block';
             resultDiv.className = `result ${result.status === 'success' ? 'success' : 'error'}`;
-            resultDiv.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+
+            // 1. 准备显示 JSON 文本
+            let htmlContent = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+
+            // 2. ✨ 新增：如果返回结果里包含图片，就把它显示出来！
+            if (result.result_image) {
+                htmlContent += `
+                    <div style="margin-top: 20px; text-align: center;">
+                        <h3>👁️ 血管分割结果展示：</h3>
+                        <p>置信度: ${result.confidence} | 血管覆盖率: ${result.vessel_coverage}</p>
+                        <img src="${result.result_image}" style="max-width: 100%; border: 2px solid #333; border-radius: 8px;">
+                    </div>
+                `;
+            }
+
+            resultDiv.innerHTML = htmlContent;
         }
     </script>
 </body>
