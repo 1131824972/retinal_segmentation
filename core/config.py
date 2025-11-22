@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # 文件上传配置
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
-    ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/jpg", "image/png", "image/tiff", "image/gif"]
+    ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/jpg", "image/png", "image/tiff", "image/gif", "image/tif"]
     MAX_IMAGE_DIMENSION: int = 4096  # 最大图像尺寸
 
     # 模型配置
@@ -53,7 +53,8 @@ ALLOWED_CONTENT_TYPES = {
     "image/png": "png",
     "image/tiff": "tiff",
     "image/gif": "gif",
+    "image/tif": "tif"
 }
 
 # 支持的图像格式
-SUPPORTED_FORMATS = ["png", "jpg", "jpeg", "tiff", "gif"]
+SUPPORTED_FORMATS = ["png", "jpg", "jpeg", "tiff", "gif", "tif"]
