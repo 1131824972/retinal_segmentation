@@ -1,97 +1,58 @@
-# api/endpoints/routes_image.py
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from fastapi import status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from models.image import Image
-from core.config import settings, ALLOWED_CONTENT_TYPES
-from utils.image_utils import base64_to_image, validate_image_size, get_image_info, format_file_size
 import os
-import time
-import uuid
-import base64
-import logging
 
-logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/images", tags=["Images"])
+router = APIRouter(prefix="/images", tags=["Images"])
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-@router.post("/upload", status_code=status.HTTP_201_CREATED)
-async def upload_image(file: UploadFile = File(...), user_id: str | None = None):
-    """
-    上传图像并把图像元数据写入 images 集合
-    """
-    request_id = f"file_{int(time.time())}_{uuid.uuid4().hex[:8]}"
-    logger.info(f"📤 文件上传请求 {request_id} - 文件名: {file.filename}")
+@router.post("/upload")
+async def upload_image(
+        user_id: str = Form(...),
+        file: UploadFile = File(...)
+):
+    """上传图像文件 (异步修复版)"""
+    save_path = os.path.join(UPLOAD_DIR, file.filename)
 
-    # 1. 验证文件类型
-    if file.content_type not in settings.ALLOWED_IMAGE_TYPES:
-        raise HTTPException(status_code=400, detail="Unsupported file type")
+    # 这里的 file.read() 是异步操作，建议加 await，虽然 FastAPI 有时兼容同步写法，但异步更好
+    content = await file.read()
 
-    contents = await file.read()
-    file_size = len(contents)
-    if file_size == 0:
-        raise HTTPException(status_code=400, detail="Empty file")
-
-    if file_size > settings.MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="File too large")
-
-    # 2. 保存到磁盘
-    save_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}_{file.filename}"
-    save_path = os.path.join(UPLOAD_DIR, save_name)
+    # 写入文件是阻塞操作，生产环境建议用 aiofiles，这里演示用普通写入即可
     with open(save_path, "wb") as f:
-        f.write(contents)
+        f.write(content)
 
-    # 3. 读取图像信息（使用你的工具）
-    # 如果你已有 get_image_info，可以加载 PIL 等信息
-    try:
-        image = base64_to_image(base64.b64encode(contents).decode("utf-8"))
-        is_valid, err = validate_image_size(image, (100,100), (settings.MAX_IMAGE_DIMENSION, settings.MAX_IMAGE_DIMENSION))
-        if not is_valid:
-            raise HTTPException(status_code=400, detail=err)
-        image_info = get_image_info(image)
-    except Exception:
-        image_info = {}
-
-    formatted_size = format_file_size(file_size)
-
-    # 4. 插入 DB
-    img = Image(user_id=user_id or "anonymous", image_path=save_path, image_metadata={
+    metadata = {
         "filename": file.filename,
-        "content_type": file.content_type,
-        "saved_name": save_name
-    })
+        "content_type": file.content_type
+    }
+
+    # 创建 Image 实例
+    img = Image(
+        user_id=user_id,
+        filename=file.filename,
+        file_size=len(content),
+        content_type=file.content_type
+    )
+
+    # 关键修复：添加 await
     image_id = await img.save()
 
-    return JSONResponse(status_code=201, content={
-        "status": "success",
-        "request_id": request_id,
-        "image_id": image_id,
-        "filename": file.filename,
-        "file_size": formatted_size,
-        "image_info": image_info
-    })
+    return {"image_id": image_id, "message": "Image uploaded successfully"}
 
 
-@router.get("", summary="List images")
-async def list_images():
-    # 简单列出（最多1000条）
-    from core.database import images_collection
-    cursor = images_collection.find().sort("uploaded_at", -1).limit(1000)
-    docs = await cursor.to_list(length=1000)
-    for d in docs:
-        d["_id"] = str(d["_id"])
-    return {"count": len(docs), "data": docs}
+@router.get("/user/{user_id}")
+async def get_images_by_user(user_id: str):
+    """根据用户ID查询该用户所有图像 (异步修复版)"""
+    # 关键修复：添加 await
+    images = await Image.find_by_user(user_id)
 
+    if not images:
+        raise HTTPException(status_code=404, detail="No images found for this user")
 
-@router.get("/{image_id}")
-async def get_image(image_id: str):
-    from core.database import images_collection
-    from bson import ObjectId
-    doc = await images_collection.find_one({"_id": ObjectId(image_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Image not found")
-    doc["_id"] = str(doc["_id"])
-    return doc
+    # 将 ObjectId 转换为字符串，以便 JSON 序列化
+    for img in images:
+        img["_id"] = str(img["_id"])
+
+    return {"images": images}

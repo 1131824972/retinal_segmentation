@@ -4,12 +4,15 @@ from typing import Optional, Dict, Any
 import time
 import logging
 import uuid
+import base64
 
 from core.config import settings
 from services.model_service import model_service
 from utils.image_utils import base64_to_image, validate_image_size, get_image_info
 
-from fastapi_limiter.depends import RateLimiter
+# 引入数据库模型
+from models.image import Image
+from models.prediction import Prediction
 
 
 logger = logging.getLogger(__name__)
@@ -31,7 +34,7 @@ class Base64PredictionRequest(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
                 "image_format": "png"
@@ -64,29 +67,24 @@ class ErrorResponse(BaseModel):
              response_model=PredictionResponse,
              responses={
                  400: {"model": ErrorResponse},
-                 500: {"model": ErrorResponse},
-                 429: {"model": ErrorResponse}, # (可选) 告诉文档有 429 错误
-             },
-             # 使用 settings 中的配置来限流
-             dependencies=[Depends(RateLimiter(
-                 times=settings.MAX_REQUESTS_PER_MINUTE,
-                 seconds=60
-             ))]
-            )
+                 500: {"model": ErrorResponse}
+             })
 async def predict_from_base64(request: Base64PredictionRequest):
     """
     Base64格式图像上传与预测
 
     支持包含data URI前缀的base64字符串，自动进行图像验证和预处理
+    并自动将预测记录保存至数据库。
     """
     start_time = time.time()
+    # 生成请求ID
     request_id = f"base64_{int(time.time())}_{uuid.uuid4().hex[:8]}"
 
     logger.info(f"📨 收到Base64预测请求 {request_id}")
 
     try:
         # 1. 验证图像格式
-        allowed_formats = ["png", "jpg", "jpeg"]
+        allowed_formats = ["png", "jpg", "jpeg", "gif"]
         if request.image_format.lower() not in allowed_formats:
             raise HTTPException(
                 status_code=400,
@@ -158,6 +156,47 @@ async def predict_from_base64(request: Base64PredictionRequest):
         prediction_result = await model_service.predict(image, request_id)
 
         processing_time = time.time() - start_time
+
+        # === 新增：数据库保存逻辑 ===
+        if prediction_result["status"] == "success":
+            try:
+                # 计算近似文件大小 (Base64长度 * 0.75)
+                approx_size = int(len(base64_data) * 0.75)
+
+                # 为Base64图片创建一个虚拟文件名
+                virtual_filename = f"{request_id}.{request.image_format}"
+
+                # 1. 保存图片记录 (仅元数据)
+                img_record = Image(
+                    user_id="anonymous_api",  # Base64接口通常没有用户上下文，记为API匿名用户
+                    filename=virtual_filename,
+                    file_size=approx_size,
+                    content_type=f"image/{request.image_format}"
+                )
+                # 异步保存图片
+                image_db_id = await img_record.save()
+
+                # 2. 保存预测记录
+                pred_record = Prediction(
+                    request_id=request_id,
+                    model_version=model_service.model_version,
+                    result_data={
+                        "confidence": prediction_result.get("confidence"),
+                        "vessel_coverage": prediction_result.get("vessel_coverage"),
+                        "processing_time": processing_time,
+                        "image_db_id": image_db_id
+                    },
+                    user_id="anonymous_api"
+                )
+                # 异步保存预测
+                await pred_record.save()
+
+                logger.info(f"💾 [DB] Base64预测记录已保存 (ID: {image_db_id})")
+
+            except Exception as db_e:
+                # 数据库错误仅记录日志，不阻断返回
+                logger.error(f"⚠️ [DB] 保存记录失败: {str(db_e)}")
+        # ==========================
 
         if prediction_result["status"] == "success":
             logger.info(f"✅ 预测成功 {request_id}")
