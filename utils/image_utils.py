@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def base64_to_image(base64_string: str) -> Optional[np.ndarray]:
     """
     将base64字符串转换为OpenCV图像
-    (已升级：支持 GIF 格式)
+    (已升级：支持 GIF / TIFF)
     """
     try:
         # 移除可能的data URI前缀
@@ -22,34 +22,30 @@ def base64_to_image(base64_string: str) -> Optional[np.ndarray]:
         # 解码base64
         image_data = base64.b64decode(base64_string)
 
-        # 尝试 1: 使用 OpenCV 直接解码 (速度快，支持 jpg/png)
+        # 先尝试OpenCV解码
         nparr = np.frombuffer(image_data, np.uint8)
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        # 如果 OpenCV 解码失败 (例如 GIF)，尝试使用 Pillow
+        # ⚠️ 如果OpenCV失败：尝试Pillow (处理 GIF / TIFF / 其他格式)
         if image is None:
-            # 尝试 2: 使用 Pillow 读取 (支持 gif)
             pil_image = Image.open(io.BytesIO(image_data))
 
-            # GIF 往往是调色板模式(P)或灰度，需要转为 RGB
+            # 对于TIFF / GIF 等格式，统一转 RGB
             if pil_image.mode != 'RGB':
                 pil_image = pil_image.convert('RGB')
 
-            # 转换为 NumPy 数组
-            image = np.array(pil_image)
+            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
 
-            # Pillow 是 RGB 格式，OpenCV 需要 BGR，所以要转换颜色空间
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-            logger.info(f"✅ 使用 Pillow 成功解码图像 (可能是GIF), 尺寸: {image.shape}")
+            logger.info(f"🟢 使用 Pillow 成功解码 TIFF/GIF 图像, 尺寸: {image.shape}")
         else:
-            logger.info(f"✅ 图像解码成功，尺寸: {image.shape}")
+            logger.info(f"🟢 图像解码成功，尺寸: {image.shape}")
 
         return image
 
     except Exception as e:
         logger.error(f"❌ Base64转换失败: {str(e)}")
         return None
+
 
 
 def image_to_base64(image: np.ndarray, format: str = "png") -> str:

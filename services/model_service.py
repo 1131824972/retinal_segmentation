@@ -6,179 +6,137 @@ import os
 import sys
 import torch
 import cv2
-from PIL import Image
 from datetime import datetime
 
-from core.config import settings
 from utils.image_utils import image_to_base64
 
-# === 关键设置 ===
-# 1. 把 ai_core 加入系统路径，这样才能导入 Unet.py
+# ========= 关键：确保可以 import 模型类 =========
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'ai_core'))
 
-# 2. 尝试导入模型架构
 try:
     from ai_core.Unet import UNet
-except ImportError as e:
-    print(f"❌ 导入模型架构失败: {e}")
-    # 这里的 fallback 只是为了防止编辑器报错，运行时如果导入失败会崩
+except Exception:
     UNet = None
+
 
 logger = logging.getLogger(__name__)
 
 
 class ModelService:
-    """
-    模型服务类 - 正式版
-    集成真实的 PyTorch U-Net 模型进行推理
-    """
 
     def __init__(self):
         self.model = None
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model_loaded = False
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model_name = "U-Net (PyTorch)"
-        self.model_version = "1.0.0-release"
         self.load_time = None
         self.prediction_count = 0
 
-        logger.info(f"🎯 模型服务初始化 (设备: {self.device})")
+        logger.info(f"🎯 ModelService Initialized, device={self.device}")
 
-    async def load_model(self, model_path: str) -> bool:
-        """
-        加载真实模型 (支持全模型加载模式)
-        """
+    async def load_model(self, model_path: str):
+
         try:
-            logger.info(f"🔧 开始加载模型: {model_path}")
-            start_time = time.time()
+            logger.info(f"🔧 开始加载模型...")
 
-            # 1. 确定模型文件路径
-            # 假设 bestmodel.pt 就在 ai_core 文件夹下
             real_model_path = os.path.join(os.path.dirname(__file__), '..', 'ai_core', 'bestmodel.pt')
 
             if not os.path.exists(real_model_path):
-                logger.error(f"❌ 找不到模型文件: {real_model_path}")
+                logger.error("❌ 模型文件不存在")
                 return False
 
-            # 2. 加载完整模型对象
-
             self.model = torch.load(real_model_path, map_location=self.device)
-
-            # 3. 转移到设备 (CPU 或 CUDA)
             self.model.to(self.device)
-            self.model.eval()  # 开启评估模式
+            self.model.eval()
 
             self.model_loaded = True
             self.load_time = datetime.now()
-            load_duration = time.time() - start_time
 
-            logger.info(f"✅ 模型加载成功! 耗时: {load_duration:.2f}s")
+            logger.info("✅ 模型加载成功")
             return True
 
         except Exception as e:
-            logger.error(f"❌ 模型加载失败: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            self.model_loaded = False
+            logger.error(f"❌ 模型加载失败: {e}")
             return False
 
+
     async def predict(self, image: np.ndarray, request_id: str) -> Dict[str, Any]:
-        """
-        使用真实模型进行推理
-        """
+
         if not self.model_loaded:
-            return {"status": "error", "message": "模型未加载", "request_id": request_id}
+            return {"status": "error", "message": "模型未加载"}
 
         try:
             start_time = time.time()
             self.prediction_count += 1
 
-            # === 1. 图像预处理 ===
-            # 原始 image 是 (H, W, 3) 的 BGR 格式 (OpenCV读取)
-            original_h, original_w = image.shape[:2]
+            h, w = image.shape[:2]
 
-            # 转为 RGB
+            # ====================
+            # PREPROCESS (RGB)
+            # ====================
+
             img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            # 调整大小到模型输入尺寸 (例如 512x512)
-            # ⚠️ 注意：必须和训练时的大小一致，否则效果很差
-            input_size = (512, 512)
-            img_resized = cv2.resize(img_rgb, input_size)
+            img_resized = cv2.resize(img_rgb, (512, 512))
 
-            # 归一化 (0-255 -> 0.0-1.0)
-            img_normalized = img_resized.astype(np.float32) / 255.0
+            img_norm = img_resized.astype(np.float32) / 255.0
 
-            # 转换维度: (H, W, C) -> (C, H, W)
-            img_transposed = img_normalized.transpose((2, 0, 1))
+            img_chw = img_norm.transpose((2, 0, 1))  # (3, 512, 512)
 
-            # 转为 Tensor 并增加 Batch 维度: (1, C, H, W)
-            img_tensor = torch.from_numpy(img_transposed).unsqueeze(0)
-            img_tensor = img_tensor.to(self.device)
+            img_tensor = torch.from_numpy(img_chw).unsqueeze(0).to(self.device)
 
-            # === 2. 模型推理 ===
-            with torch.no_grad():  # 不计算梯度，节省内存
-                output = self.model(img_tensor)
 
-                # U-Net 输出通常是 Logits，需要经过 Sigmoid 变成概率 (0-1)
-                # 如果你的模型最后一层已经是 Sigmoid，这步可以去掉，但加上通常无害
-                probs = torch.sigmoid(output)
+            # ====================
+            # INFER
+            # ====================
+            with torch.no_grad():
+                y = self.model(img_tensor)
+                y = torch.sigmoid(y).squeeze().cpu().numpy()
 
-                # 移除 Batch 和 Channel 维度 -> (H, W)
-                probs = probs.squeeze().cpu().numpy()
+            mask = (y > 0.5).astype(np.uint8) * 255
 
-            # === 3. 后处理 ===
-            # 阈值处理：大于 0.5 算血管，小于 0.5 算背景
-            mask = (probs > 0.5).astype(np.uint8) * 255
+            if mask.shape != (h, w):
+                mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
 
-            # 调整回原始尺寸 (可选，看前端是否需要)
-            if mask.shape != (original_h, original_w):
-                mask = cv2.resize(mask, (original_w, original_h), interpolation=cv2.INTER_NEAREST)
+            # ====================
+            # SAVE
+            # ====================
 
-            # 计算置信度和覆盖率
-            confidence = float(probs.mean())  # 这是一个粗略的估计
-            vessel_coverage = float(np.count_nonzero(mask) / mask.size)
+            outputs_dir = os.path.join(os.getcwd(), "outputs")
+            os.makedirs(outputs_dir, exist_ok=True)
 
-            # 转为 Base64
+            mask_file = f"{request_id}_mask.png"
+            overlay_file = f"{request_id}_overlay.png"
+
+            # 保存mask
+            cv2.imwrite(os.path.join(outputs_dir, mask_file), mask)
+
+            # overlay
+            green_map = np.zeros_like(image)
+            green_map[:, :, 1] = mask
+
+            overlay = cv2.addWeighted(image, 0.7, green_map, 0.3, 0)
+            cv2.imwrite(os.path.join(outputs_dir, overlay_file), overlay)
+
+            # swagger return
             result_base64 = image_to_base64(mask, "png")
-            actual_time = time.time() - start_time
-
-            logger.info(f"✅ 真实预测完成 [{request_id}]")
 
             return {
                 "status": "success",
                 "request_id": request_id,
+                "mask_file": mask_file,
+                "overlay_file": overlay_file,
                 "result_image": result_base64,
-                "processing_time": actual_time,
-                "confidence": round(confidence, 4),
-                "vessel_coverage": round(vessel_coverage, 4),
-                "message": "预测成功 (真实模型)"
+                "processing_time": time.time() - start_time,
+                "message": "预测成功（RGB 3-channel）"
             }
 
         except Exception as e:
-            logger.error(f"❌ 预测过程出错: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
+            logger.error(f"❌ 推理失败: {e}")
             return {
                 "status": "error",
                 "request_id": request_id,
-                "message": f"预测失败: {str(e)}"
+                "message": str(e)
             }
 
-    def get_model_info(self) -> Dict[str, Any]:
-        return {
-            "model_name": self.model_name,
-            "version": self.model_version,
-            "status": "loaded" if self.model_loaded else "error",
-            "device": str(self.device),
-            "input_size": "512x512"
-        }
 
-    def get_service_stats(self) -> Dict[str, Any]:
-        return {
-            "total_predictions": self.prediction_count,
-            "uptime": str(datetime.now() - self.load_time) if self.load_time else "N/A"
-        }
-
-
-# 创建全局实例
 model_service = ModelService()
