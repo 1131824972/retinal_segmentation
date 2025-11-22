@@ -29,7 +29,7 @@ class Base64PredictionRequest(BaseModel):
     )
     image_format: str = Field(
         default="png",
-        description="图像格式：png, jpg, jpeg",
+        description="图像格式：png, jpg, jpeg,gif,tif,tiff",
         example="png"
     )
 
@@ -84,7 +84,7 @@ async def predict_from_base64(request: Base64PredictionRequest):
 
     try:
         # 1. 验证图像格式
-        allowed_formats = ["png", "jpg", "jpeg", "gif"]
+        allowed_formats = ["png", "jpg", "jpeg", "gif", "tif", "tiff"]
         if request.image_format.lower() not in allowed_formats:
             raise HTTPException(
                 status_code=400,
