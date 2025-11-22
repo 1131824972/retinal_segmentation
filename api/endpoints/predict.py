@@ -14,6 +14,7 @@ from utils.image_utils import base64_to_image, validate_image_size, get_image_in
 from models.image import Image
 from models.prediction import Prediction
 
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
