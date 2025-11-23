@@ -191,7 +191,7 @@ async def get_model_info():
         device=raw_info.get("device", "CPU"),
         # 其他字段给默认值
         description=raw_info.get("description", "PyTorch Inference Model"),
-        supported_formats=["PNG", "JPG", "BMP", "GIF"],
+        supported_formats=["PNG", "JPG", "BMP", "GIF", "TIFF","TIF"],
         integration_status="Ready"
     )
 
