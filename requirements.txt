@@ -10,7 +10,7 @@ dnspython==2.4.2
 motor==3.3.2
 
 #模型
-torch==1.12.1
+torch==1.12.1+cu121
 matplotlib==3.7.3
 tqdm==4.67.1
 torchvision
