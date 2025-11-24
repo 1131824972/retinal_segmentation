@@ -1,8 +1,11 @@
+# api/endpoints/routes_image.py
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from models.image import Image
 import os
+import logging
+from models.image import Image
 
 router = APIRouter(prefix="/images", tags=["Images"])
+logger = logging.getLogger(__name__)
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -16,42 +19,37 @@ async def upload_image(
     """上传图像文件 (异步修复版)"""
     save_path = os.path.join(UPLOAD_DIR, file.filename)
 
-    # 这里的 file.read() 是异步操作，建议加 await，虽然 FastAPI 有时兼容同步写法，但异步更好
+    # 读取文件（异步）
     content = await file.read()
 
-    # 写入文件是阻塞操作，生产环境建议用 aiofiles，这里演示用普通写入即可
+    # 写入文件（同步写法，保持你原逻辑）
     with open(save_path, "wb") as f:
         f.write(content)
 
-    metadata = {
-        "filename": file.filename,
-        "content_type": file.content_type
-    }
-
-    # 创建 Image 实例
+    # 创建 Image 实例（兼容 user_id 和新增 patient_id 可一并传入）
     img = Image(
         user_id=user_id,
+        patient_id=None,
         filename=file.filename,
         file_size=len(content),
-        content_type=file.content_type
+        content_type=file.content_type,
+        filepath=save_path
     )
 
-    # 关键修复：添加 await
     image_id = await img.save()
 
     return {"image_id": image_id, "message": "Image uploaded successfully"}
 
 
-@router.get("/user/{user_id}")
-async def get_images_by_user(user_id: str):
+@router.get("/patient/{patient_id}")
+async def get_images_by_user(patient_id: str):
     """根据用户ID查询该用户所有图像 (异步修复版)"""
-    # 关键修复：添加 await
-    images = await Image.find_by_user(user_id)
+    images = await Image.find_by_user(patient_id)
 
     if not images:
-        raise HTTPException(status_code=404, detail="No images found for this user")
+        raise HTTPException(status_code=404, detail="No images found for this patient")
 
-    # 将 ObjectId 转换为字符串，以便 JSON 序列化
+    # 将 ObjectId 转换为字符串，方便序列化（前端显示）
     for img in images:
         img["_id"] = str(img["_id"])
 

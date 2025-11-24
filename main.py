@@ -12,7 +12,7 @@ from core.config import settings
 from core.database import init_db
 from contextlib import asynccontextmanager
 # 导入所有路由
-from api.endpoints import health, predict, upload, routes_user
+from api.endpoints import health, predict, upload, routes_patient
 
 # === 1. 定义上下文变量 (ContextVar) ===
 # 这是一种在异步编程中安全存储"全局"变量的方式
@@ -117,7 +117,7 @@ async def add_request_id(request: Request, call_next):
 
 # 注册路由
 app.include_router(health.router)
-app.include_router(routes_user.router, prefix="/api/v1")  # 用户认证
+app.include_router(routes_patient.router, prefix="/api/v1")  # 用户认证
 app.include_router(predict.router, prefix=settings.API_V1_STR)
 app.include_router(upload.router, prefix=settings.API_V1_STR)
 

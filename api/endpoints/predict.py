@@ -168,7 +168,7 @@ async def predict_from_base64(request: Base64PredictionRequest):
 
                 # 1. 保存图片记录 (仅元数据)
                 img_record = Image(
-                    user_id="anonymous_api",  # Base64接口通常没有用户上下文，记为API匿名用户
+                    patient_id="anonymous_api",  # Base64接口通常没有用户上下文，记为API匿名用户
                     filename=virtual_filename,
                     file_size=approx_size,
                     content_type=f"image/{request.image_format}"
@@ -186,7 +186,7 @@ async def predict_from_base64(request: Base64PredictionRequest):
                         "processing_time": processing_time,
                         "image_db_id": image_db_id
                     },
-                    user_id="anonymous_api"
+                    patient_id="anonymous_api"
                 )
                 # 异步保存预测
                 await pred_record.save()

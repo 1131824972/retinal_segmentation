@@ -1,7 +1,7 @@
 # models/__init__.py
-from .user import User
+from .patient import Patient
 from .image import Image
 from .prediction import Prediction
 from .model import ModelInfo
 
-__all__ = ["User", "Image", "Prediction", "ModelInfo"]
+__all__ = ["Patient", "Image", "Prediction", "ModelInfo"]

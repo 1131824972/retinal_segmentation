@@ -9,7 +9,7 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
 
 # Collections
-users_collection = db["users"]
+patients_collection = db["patients"]
 images_collection = db["images"]
 predictions_collection = db["predictions"]
 models_collection = db["models"]
@@ -17,7 +17,7 @@ models_collection = db["models"]
 async def init_db():
     """初始化数据库索引 (异步版本)"""
     # create_index is async in motor
-    await users_collection.create_index("email", unique=True)
-    await images_collection.create_index("user_id")
+    await patients_collection.create_index("email", unique=True)
+    await images_collection.create_index("patient_id")
     await predictions_collection.create_index("image_id")
     await models_collection.create_index("model_version", unique=True)
