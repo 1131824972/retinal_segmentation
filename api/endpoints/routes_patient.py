@@ -30,7 +30,11 @@ async def register_user(user_data: UserRegister):
     password_hash = await run_in_threadpool(bcrypt.hash, user_data.password)
 
     # 3. 异步保存为 Patient
-    new_patient = Patient(username=user_data.username, password_hash=password_hash, email=user_data.email)
+    new_patient = Patient(username=user_data.username,
+                          password_hash=password_hash,
+                          email=user_data.email,
+                          display_name=user_data.username
+                          )
     patient_id = await new_patient.save()
 
     return {"patient_id": patient_id, "message": "Registered successfully"}

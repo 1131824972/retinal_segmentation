@@ -4,12 +4,10 @@ from core.database import predictions_collection
 from bson.objectid import ObjectId
 
 class Prediction:
-    def __init__(self, request_id: str, model_version: str, result_data: dict, user_id: str = None, patient_id: str = None, image_id: str = None, mask_file: str = None, overlay_file: str = None):
+    def __init__(self, request_id: str, model_version: str, result_data: dict, patient_id: str = None, image_id: str = None, mask_file: str = None, overlay_file: str = None):
         self.request_id = request_id
         self.model_version = model_version
-        self.result_data = result_data or {}
-        # 兼容旧字段 user_id，同时增加 patient_id 和 image_id
-        self.user_id = user_id
+        self.result_data = result_data
         self.patient_id = patient_id
         self.image_id = image_id
         self.mask_file = mask_file

@@ -1,4 +1,14 @@
-# api/endpoints/upload.py
+"""
+文件上传预测模块 (Upload Prediction Module)
+------------------------------------------
+本模块负责处理通过文件上传方式进行的血管分割请求。
+它包含以下核心功能：
+1. 接收前端上传的图片文件 (PNG, JPG, GIF, TIFF 等)。
+2. 进行严格的文件校验 (大小、格式、有效性)。
+3. 调用 ModelService 进行 AI 推理。
+4. 将原始图片和预测结果异步存入数据库。
+5. 返回包含 Base64 结果图和医学指标的 JSON 响应。
+"""
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
