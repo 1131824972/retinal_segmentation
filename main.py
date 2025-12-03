@@ -78,15 +78,33 @@ async def lifespan(app: FastAPI):
     logger.info("👋 感谢使用视网膜血管分割API服务")
 
 
-# 创建唯一的 FastAPI 应用实例
+# === 创建应用 ===
 app = FastAPI(
-    title=settings.APP_NAME,
-    description=settings.PROJECT_DESCRIPTION,
+    title="视网膜血管分割系统 API (Retinal Vessel Segmentation API)",
+    description="""
+    ## 👁️ 项目简介
+    基于 **U-Net** 深度学习模型的视网膜血管自动分割系统后端服务。
+
+    ## 🚀 核心功能
+    * **AI 推理**: 支持上传眼底图像 (TIFF/PNG/JPG/GIF)，返回高精度的血管分割图。
+    * **数据管理**: 自动记录每一张上传的图片和对应的预测结果。
+    * **用户系统**: 提供医生/病人的注册与登录功能。
+    * **模型管理**: 支持多版本模型的注册与切换。
+
+    ## 📦 技术栈
+    * **Web**: FastAPI (Async)
+    * **AI**: PyTorch + OpenCV
+    * **DB**: MongoDB (Motor)
+    """,
     version=settings.APP_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
     lifespan=lifespan,
+    contact={
+        "name": "后端开发组",
+        "email": "1131824972@qq.com",
+    },
 )
 
 # 配置 CORS
