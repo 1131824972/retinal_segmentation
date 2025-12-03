@@ -83,7 +83,6 @@ class ModelService:
             img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             img_resized = cv2.resize(img_rgb, (512, 512))
 
-            # 归一化 (匹配 dataset.py)
             img_float = img_resized.astype(np.float32)
             min_val = np.min(img_float)
             max_val = np.max(img_float)

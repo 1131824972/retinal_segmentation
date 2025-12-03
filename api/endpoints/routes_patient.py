@@ -5,7 +5,7 @@ from passlib.hash import bcrypt
 from pydantic import BaseModel
 from models.patient import Patient
 
-router = APIRouter(prefix="/users", tags=["Users"])  # 保持原路径兼容性
+router = APIRouter(prefix="/patients", tags=["Patients"])
 
 
 class UserRegister(BaseModel):
