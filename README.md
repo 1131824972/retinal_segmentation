@@ -2,11 +2,12 @@
 
 ## 🚀 快速开始
 
-### 安装依赖
-```bash
-pip install -r requirements.txt
-```
-### 安装pytorch
+### 启动服务
 ```angular2html
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+docker-compose up --build
+```
+
+### 关闭服务
+```angular2html
+docker-compose down
 ```
