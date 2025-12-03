@@ -1,0 +1,26 @@
+# 忽略 Git 仓库数据
+.git
+.gitignore
+
+# 忽略 Python 缓存和虚拟环境
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+venv.bak/
+
+# 忽略 IDE 配置文件
+.idea
+.vscode
+
+# 忽略本地生成的数据（让容器自己生成）
+uploads/
+logs/
+*.log
+
+# 忽略本地的测试图片（可选，保留 mock_data 用于演示，但忽略临时测试图）
+# mock_data/ 建议保留，方便演示

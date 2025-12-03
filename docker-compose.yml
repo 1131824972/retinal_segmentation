@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # 服务 1: 你的后端应用
+  backend:
+    build: .  # 使用当前目录的 Dockerfile 构建
+    container_name: retina_backend
+    ports:
+      - "8000:8000"  # 把容器的 8000 端口映射到电脑的 8000
+    depends_on:
+      - mongodb      # 等数据库启动了再启动后端
+    environment:
+      # 覆盖代码里的配置，告诉后端连接 Docker 里的数据库
+      - MONGO_URL=mongodb://mongodb:27017/
+      - MONGO_DB_NAME=retinal_segmentation
+    volumes:
+      # 把上传文件夹挂载出来，防止重启容器后图片丢失
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+
+  # 服务 2: MongoDB 数据库
+  mongodb:
+    image: mongo:6.0  # 使用官方 MongoDB 镜像
+    container_name: retina_mongo
+    ports:
+      - "27017:27017" # 方便你用 Compass 连接查看数据
+    volumes:
+      # 数据持久化：把数据库文件存在本地的 mongo_data 文件夹里
+      - ./mongo_data:/data/db
