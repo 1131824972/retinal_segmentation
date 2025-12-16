@@ -1,0 +1,181 @@
+/* 自定义工具类 */
+.content-auto {
+    content-visibility: auto;
+}
+
+.text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.backdrop-blur-md {
+    backdrop-filter: blur(10px);
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.parallax {
+    transform: translateY(var(--parallax-y, 0));
+    transition: transform 0.1s ease-out;
+}
+
+/* 技术亮点卡片过渡效果 */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* Hero 区域动画 */
+.hero-animate {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in-down {
+    animation: fadeInDown 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) translateX(-50%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) translateX(-50%);
+    }
+}
+
+/* 悬停效果增强 */
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* 技术亮点卡片过渡效果 */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 加载动画 */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+.spin-slow {
+    animation: spin-slow 3s linear infinite;
+}
+
+/* 双层旋转效果 */
+.double-spin {
+    position: relative;
+    animation: spin 2s linear infinite;
+}
+
+.double-spin::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80%;
+    height: 80%;
+    margin: -40% 0 0 -40%;
+    border: 2px solid transparent;
+    border-top-color: var(--tw-border-opacity, 1) var(--tw-border-color, currentColor);
+    border-radius: 50%;
+    animation: spin-slow 1.5s linear infinite reverse;
+}
+
+/* 进度条动画 */
+@keyframes progress {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+.progress-animate {
+    animation: progress 2s ease-in-out;
+}
+
+/* 按钮交互反馈 */
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-ripple:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* 图像淡入效果 */
+@keyframes imageFadeIn {
+    from {
+        opacity: 0;
+        filter: blur(5px);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+.image-fade-in {
+    animation: imageFadeIn 0.8s ease-out forwards;
+}
+
+/* 上传区域悬停效果 */
+#dropZone.active {
+    border-color: var(--tw-border-opacity, 1) var(--tw-border-color, currentColor);
+    background-color: rgba(249, 250, 251, 0.9);
+}

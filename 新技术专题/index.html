@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视网膜血管智能分割系统</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- 自定义配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#009688', // 主色调：绿色系，象征生命与医疗
+                        secondary: '#3f51b5', // 辅助色：深蓝色，用于强调
+                        accent: '#4caf50', // 强调色：浅绿色
+                        dark: '#212121', // 深色文本
+                        light: '#f5f5f5', // 浅色背景
+                    },
+                    fontFamily: {
+                        sans: ['Microsoft YaHei', 'PingFang SC', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+        }
+    </style>
+    <!-- 引入外部CSS文件 -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="font-sans text-dark bg-white overflow-x-hidden">
+    <!-- 导航栏 -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-sm">
+        <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="text-xl font-bold text-primary flex items-center">
+                <i class="fa fa-hospital-o mr-2 text-2xl"></i>
+                视网膜血管分割中心
+            </a>
+            <div class="hidden md:flex space-x-8">
+                <a href="#features" class="text-dark/80 hover:text-primary transition-colors font-medium">技术亮点</a>
+                <a href="#visualization" class="text-dark/80 hover:text-primary transition-colors font-medium">数据可视化</a>
+                <a href="#upload" class="text-dark/80 hover:text-primary transition-colors font-medium">分割演示</a>
+                <a href="#architecture" class="text-dark/80 hover:text-primary transition-colors font-medium">架构展示</a>
+                <a href="#future" class="text-dark/80 hover:text-primary transition-colors font-medium">项目展望</a>
+            </div>
+            <button class="md:hidden text-dark hover:text-primary transition-colors">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主内容区块 -->
+    <main>
+        <!-- Hero 横幅 -->
+        <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden">
+            <!-- 视差背景 -->
+            <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-teal-50 z-0 parallax-background" style="--parallax-speed: 0.3;">
+                <div class="absolute inset-0 opacity-20">
+                    <!-- 抽象医疗图案 -->
+                    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <defs>
+                            <pattern id="vesselPattern" patternUnits="userSpaceOnUse" width="20" height="20">
+                                <path d="M0,10 Q5,5 10,10 T20,10" fill="none" stroke="#009688" stroke-width="0.5"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#vesselPattern)"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- 浮动装饰元素 -->
+            <div class="absolute w-64 h-64 rounded-full bg-primary/5 blur-3xl -top-20 -left-20 z-0 parallax-element" style="--parallax-speed: 0.15;"></div>
+            <div class="absolute w-80 h-80 rounded-full bg-secondary/5 blur-3xl bottom-10 right-10 z-0 parallax-element" style="--parallax-speed: 0.2;"></div>
+            
+            <div class="container mx-auto px-6 py-24 relative z-10 text-center">
+                <div class="inline-block mb-6">
+                    <div class="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                        <i class="fa fa-eye text-primary text-4xl"></i>
+                    </div>
+                </div>
+                <h1 class="text-[clamp(2.5rem,6vw,4rem)] font-bold leading-tight text-dark mb-6 opacity-0 transform translate-y-8 hero-animate">
+                    视网膜血管智能分割系统
+                </h1>
+                <p class="text-[clamp(1rem,2vw,1.25rem)] text-dark/80 max-w-2xl mx-auto mb-10 opacity-0 transform translate-y-8 hero-animate" style="animation-delay: 0.3s;">
+                    基于深度学习的高精度血管分割技术，为眼科疾病诊断提供科学依据和技术支持
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4 opacity-0 transform translate-y-8 hero-animate" style="animation-delay: 0.6s;">
+                    <a href="#upload" class="px-8 py-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl">
+                        <i class="fa fa-upload mr-2"></i> 上传图像
+                    </a>
+                    <a href="#features" class="px-8 py-4 bg-white text-primary border border-primary rounded-lg font-medium hover:bg-gray-50 transition-all shadow-md hover:shadow-lg">
+                        <i class="fa fa-info-circle mr-2"></i> 了解技术
+                    </a>
+                </div>
+                <div class="mt-12 opacity-0 transform translate-y-8 hero-animate" style="animation-delay: 0.9s;">
+                    <p class="text-sm text-dark/60">云南大学中医医院 | 眼科医学影像中心</p>
+                </div>
+            </div>
+            
+            <!-- 向下滚动指示 -->
+            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 opacity-0 animate-fade-in-down" style="animation-delay: 1s; animation-fill-mode: forwards;">
+                <a href="#features" class="text-dark/60 hover:text-primary transition-colors group">
+                    <i class="fa fa-angle-down text-3xl group-hover:scale-110 transition-transform"></i>
+                    <span class="block text-sm mt-2 text-dark/50 group-hover:text-primary transition-colors">了解更多</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- 技术亮点 -->
+        <section id="features" class="py-24 bg-white relative overflow-hidden">
+            <!-- 装饰背景 -->
+            <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-50 to-transparent opacity-50 z-0"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-primary/5 blur-3xl -z-10"></div>
+            
+            <div class="container mx-auto px-6 relative z-10">
+                <div class="text-center mb-20 fade-in">
+                    <h2 class="text-[clamp(1.875rem,4vw,3rem)] font-bold text-dark mb-6 tracking-tight">前沿技术亮点</h2>
+                    <p class="text-dark/70 max-w-2xl mx-auto text-lg leading-relaxed">结合最新深度学习技术，实现精准的视网膜血管分割，为眼科疾病诊断提供强大支持</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <!-- 技术卡片 1 -->
+                    <div class="bg-white rounded-lg p-8 border border-gray-200 hover-lift shadow-sm fade-in" style="transition-delay: 0.1s;">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                            <i class="fa fa-cogs text-xl text-primary"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-4 text-dark">Transformer + U-Net 混合架构</h3>
+                        <p class="text-dark/70 leading-relaxed">结合Transformer的全局建模能力和U-Net的细节保留优势，实现端到端的血管分割</p>
+                    </div>
+                    
+                    <!-- 技术卡片 2 -->
+                    <div class="bg-white rounded-lg p-8 border border-gray-200 hover-lift shadow-sm fade-in" style="transition-delay: 0.2s;">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                            <i class="fa fa-search-plus text-xl text-primary"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-4 text-dark">细节增强注意力机制(DEA)</h3>
+                        <p class="text-dark/70 leading-relaxed">通过创新的注意力机制，自动识别并增强微小血管细节，提高细血管的分割精度</p>
+                    </div>
+                    
+                    <!-- 技术卡片 3 -->
+                    <div class="bg-white rounded-lg p-8 border border-gray-200 hover-lift shadow-sm fade-in" style="transition-delay: 0.3s;">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                            <i class="fa fa-level-up text-xl text-primary"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-4 text-dark">级联上采样器(CUP)</h3>
+                        <p class="text-dark/70 leading-relaxed">多级联的上采样策略，逐步恢复图像分辨率，减少信息丢失，提升分割边界质量</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 数据可视化 -->
+        <section id="visualization" class="py-24 bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
+            <!-- 装饰背景元素 -->
+            <div class="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full filter blur-3xl opacity-40 -translate-y-1/2 translate-x-1/2"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 bg-indigo-100 rounded-full filter blur-3xl opacity-40 translate-y-1/2 -translate-x-1/2"></div>
+            
+            <div class="container mx-auto px-6 relative z-10">
+                <div class="text-center mb-20 fade-in">
+                    <h2 class="text-[clamp(1.875rem,4vw,3rem)] font-bold text-dark mb-6 tracking-tight">性能数据可视化</h2>
+                    <p class="text-dark/70 max-w-2xl mx-auto text-lg leading-relaxed">全面展示系统分割性能和准确率指标，直观呈现技术优势</p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                    <!-- 柱状图 -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-hidden fade-in" style="transition-delay: 0.1s;">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-semibold">血管分割准确率对比</h3>
+                            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <i class="fa fa-bar-chart text-primary"></i>
+                            </div>
+                        </div>
+                        <div id="accuracyChart" class="w-full h-80"></div>
+                    </div>
+                    
+                    <!-- 饼图 -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-hidden fade-in" style="transition-delay: 0.2s;">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-semibold">不同血管尺寸的分割效果分布</h3>
+                            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <i class="fa fa-pie-chart text-primary"></i>
+                            </div>
+                        </div>
+                        <div id="vesselSizeChart" class="w-full h-80"></div>
+                    </div>
+                    
+                    <!-- 雷达图 -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 overflow-hidden lg:col-span-2 fade-in" style="transition-delay: 0.3s;">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-semibold">性能指标雷达图</h3>
+                            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <i class="fa fa-line-chart text-primary"></i>
+                            </div>
+                        </div>
+                        <div id="performanceChart" class="w-full h-96"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 图像上传与分割展示 -->
+        <section id="upload" class="py-24 bg-gradient-to-br from-white to-blue-50 relative overflow-hidden">
+            <!-- 背景装饰元素 -->
+            <div class="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-primary/5 blur-3xl"></div>
+            <div class="absolute -bottom-40 -left-20 w-96 h-96 rounded-full bg-primary/10 blur-3xl"></div>
+            
+            <div class="container mx-auto px-6 relative z-10">
+                <div class="text-center mb-16 fade-in">
+                    <h2 class="text-[clamp(1.875rem,4vw,3rem)] font-bold text-dark tracking-tight mb-4">图像分割演示</h2>
+                    <p class="text-dark/70 max-w-2xl mx-auto text-lg leading-relaxed">上传视网膜图像，实时查看分割效果</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto">
+                    <!-- 上传区域 -->
+                    <div class="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg hover-lift border border-gray-100 overflow-hidden fade-in group">
+                        <div class="relative mb-8">
+                            <div class="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-primary/10 blur-xl group-hover:bg-primary/15 transition-colors duration-700"></div>
+                            <h3 class="text-xl font-semibold mb-6 relative z-10">上传视网膜图像</h3>
+                        </div>
+                        
+                        <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-primary transition-all duration-300 cursor-pointer bg-white/50 hover:bg-white transform hover:-translate-y-1 hover:shadow-md">
+                            <i class="fa fa-cloud-upload text-5xl text-primary/60 mb-4 transform transition-transform duration-500 hover:scale-110"></i>
+                            <p class="text-dark/70 mb-4 font-medium">拖放图像到此处，或点击选择文件</p>
+                            <p class="text-dark/50 text-sm mb-6">支持 JPG, PNG 格式，文件大小不超过 5MB</p>
+                            <button class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-all hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">
+                                选择文件 <i class="fa fa-file-image-o ml-2"></i>
+                            </button>
+                            <input type="file" id="fileInput" class="hidden" accept="image/jpeg,image/png">
+                        </div>
+                        
+                        <div id="fileInfo" class="mt-6 hidden">
+                            <div class="bg-white p-4 rounded-lg shadow-md border border-gray-100 flex items-center transform transition-all duration-300 hover:shadow-lg">
+                                <i class="fa fa-file-image-o text-primary text-2xl mr-4"></i>
+                                <div class="flex-1">
+                                    <p id="fileName" class="font-medium text-dark truncate"></p>
+                                    <p id="fileSize" class="text-dark/60 text-sm"></p>
+                                </div>
+                                <button id="removeFile" class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button id="processButton" class="mt-8 w-full py-4 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0">
+                            开始分割 <i class="fa fa-magic ml-2"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 预览区域 -->
+                    <div class="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-lg hover-lift border border-gray-100 overflow-hidden fade-in" style="transition-delay: 0.2s;">
+                        <h3 class="text-xl font-semibold mb-6">分割结果预览</h3>
+                        
+                        <!-- 预览模式切换 -->
+                        <div class="mb-6">
+                            <div class="flex bg-white p-1.5 rounded-lg shadow-sm border border-gray-100">
+                                <button id="originalBtn" class="flex-1 py-2 px-4 rounded-md bg-primary text-white font-medium transition-all hover:shadow-inner">原图</button>
+                                <button id="segmentedBtn" class="flex-1 py-2 px-4 rounded-md text-dark/70 font-medium transition-all hover:bg-gray-50">分割图</button>
+                                <button id="overlayBtn" class="flex-1 py-2 px-4 rounded-md text-dark/70 font-medium transition-all hover:bg-gray-50">叠加图</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 模型选择和透明度控制 -->
+                        <div id="modelControls" class="mb-6 hidden">
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex flex-wrap gap-4 items-center justify-between">
+                                    <!-- 模型选择 -->
+                                    <div class="flex items-center gap-3">
+                                        <label class="font-medium text-dark">模型选择：</label>
+                                        <div class="flex bg-gray-100 p-1 rounded-lg">
+                                            <button id="baseUnetBtn" class="px-4 py-1.5 rounded-md bg-white text-dark font-medium shadow-sm transition-all">BaseU-Net</button>
+                                            <button id="cbamNetBtn" class="px-4 py-1.5 rounded-md text-dark/70 font-medium transition-all hover:bg-gray-50">CBAM-Net</button>
+                                            <button id="compareBtn" class="px-4 py-1.5 rounded-md text-dark/70 font-medium transition-all hover:bg-gray-50">对比视图</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 透明度控制 -->
+                                    <div class="flex flex-wrap items-center gap-3">
+                                        <label for="opacitySlider" class="font-medium text-dark">透明度：</label>
+                                        <div class="flex items-center gap-3">
+                                            <input type="range" id="opacitySlider" min="10" max="100" value="50" class="w-40 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                            <span id="opacityValue" class="text-dark/70 font-medium w-8 text-center">50%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 预览容器 -->
+                        <div id="previewContainer" class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 flex items-center justify-center min-h-[400px] relative">
+                            <div id="emptyState" class="text-center p-8 transition-all duration-500">
+                                <div class="w-24 h-24 mx-auto rounded-full bg-primary/5 flex items-center justify-center mb-4">
+                                    <i class="fa fa-eye text-4xl text-primary/60"></i>
+                                </div>
+                                <p class="text-dark/50">上传图像后将显示预览</p>
+                            </div>
+                            
+                            <!-- 单模型预览 -->
+                            <div id="singleModelView" class="hidden w-full h-full flex items-center justify-center">
+                                <img id="previewImage" class="w-full h-full object-contain transition-all duration-700" src="" alt="预览图像">
+                            </div>
+                            
+                            <!-- 对比视图预览 -->
+                            <div id="compareView" class="hidden w-full h-full grid grid-cols-2 gap-2 p-2">
+                                <div class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden">
+                                    <img id="baseUnetImage" class="w-full h-full object-contain" src="" alt="BaseU-Net 结果">
+                                    <div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">BaseU-Net</div>
+                                </div>
+                                <div class="relative w-full h-full bg-gray-100 rounded-lg overflow-hidden">
+                                    <img id="cbamNetImage" class="w-full h-full object-contain" src="" alt="CBAM-Net 结果">
+                                    <div class="absolute top-2 left-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">CBAM-Net</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 加载叠加层 -->
+                            <div id="loadingOverlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-md flex flex-col items-center justify-center transition-all duration-500">
+                                <div class="w-20 h-20 relative">
+                                    <div class="animate-spin absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <i class="fa fa-cog text-primary/70 animate-spin-slow"></i>
+                                    </div>
+                                </div>
+                                <p class="text-dark/70 font-medium mt-6">正在处理图像...</p>
+                                <div class="mt-6 w-64 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                    <div id="progressBar" class="bg-primary h-full rounded-full transition-all duration-300 transform scale-x-0 origin-left" style="width: 0%"></div>
+                                </div>
+                                <p id="progressText" class="text-dark/60 text-sm mt-2">0%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 后端架构 -->
+        <section id="architecture" class="py-24 bg-gradient-to-br from-gray-50 to-indigo-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16 fade-in">
+                    <h2 class="text-[clamp(1.875rem,4vw,3rem)] font-bold text-dark mb-4">系统架构设计</h2>
+                    <p class="text-dark/70 max-w-2xl mx-auto text-lg">分层设计的后端架构，确保高性能和可扩展性</p>
+                </div>
+                <div class="max-w-4xl mx-auto fade-in">
+                    <div class="relative">
+                        <!-- 架构图 -->
+                        <div class="bg-white rounded-2xl p-8 shadow-xl">
+                            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                                <!-- 前端层 -->
+                                <div class="bg-light rounded-xl p-6 text-center shadow-md w-full md:w-1/3">
+                                    <h3 class="text-lg font-semibold mb-3">前端应用层</h3>
+                                    <div class="text-sm text-dark/70 space-y-2">
+                                        <p>• 用户界面</p>
+                                        <p>• 图像上传</p>
+                                        <p>• 结果展示</p>
+                                        <p>• 数据可视化</p>
+                                    </div>
+                                </div>
+                                <!-- 箭头 -->
+                                <div class="hidden md:block text-primary">
+                                    <i class="fa fa-long-arrow-right text-2xl"></i>
+                                </div>
+                                <div class="block md:hidden text-primary my-2">
+                                    <i class="fa fa-long-arrow-down text-2xl"></i>
+                                </div>
+                                <!-- API层 -->
+                                <div class="bg-light rounded-xl p-6 text-center shadow-md w-full md:w-1/3">
+                                    <h3 class="text-lg font-semibold mb-3">API服务层</h3>
+                                    <div class="text-sm text-dark/70 space-y-2">
+                                        <p>• 请求处理</p>
+                                        <p>• 身份验证</p>
+                                        <p>• 数据验证</p>
+                                        <p>• 响应格式化</p>
+                                    </div>
+                                </div>
+                                <!-- 箭头 -->
+                                <div class="hidden md:block text-primary">
+                                    <i class="fa fa-long-arrow-right text-2xl"></i>
+                                </div>
+                                <div class="block md:hidden text-primary my-2">
+                                    <i class="fa fa-long-arrow-down text-2xl"></i>
+                                </div>
+                                <!-- 模型层 -->
+                                <div class="bg-light rounded-xl p-6 text-center shadow-md w-full md:w-1/3">
+                                    <h3 class="text-lg font-semibold mb-3">模型服务层</h3>
+                                    <div class="text-sm text-dark/70 space-y-2">
+                                        <p>• 模型推理</p>
+                                        <p>• 图像处理</p>
+                                        <p>• 结果后处理</p>
+                                        <p>• 性能优化</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-10 flex justify-center">
+                                <div class="bg-primary/10 rounded-xl p-6 text-center shadow-md w-full">
+                                    <h3 class="text-lg font-semibold mb-3 text-primary">数据流</h3>
+                                    <div class="flex flex-wrap justify-center gap-4 items-center">
+                                        <div class="bg-white px-4 py-2 rounded-full shadow-sm">图像输入</div>
+                                        <i class="fa fa-arrow-right text-primary"></i>
+                                        <div class="bg-white px-4 py-2 rounded-full shadow-sm">预处理</div>
+                                        <i class="fa fa-arrow-right text-primary"></i>
+                                        <div class="bg-white px-4 py-2 rounded-full shadow-sm">模型推理</div>
+                                        <i class="fa fa-arrow-right text-primary"></i>
+                                        <div class="bg-white px-4 py-2 rounded-full shadow-sm">后处理</div>
+                                        <i class="fa fa-arrow-right text-primary"></i>
+                                        <div class="bg-white px-4 py-2 rounded-full shadow-sm">结果输出</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 项目展望 -->
+        <section id="future" class="py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16 fade-in">
+                    <h2 class="text-[clamp(1.875rem,4vw,3rem)] font-bold text-dark mb-4">项目展望</h2>
+                    <p class="text-dark/70 max-w-2xl mx-auto text-lg">未来发展规划和团队介绍</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                    <!-- 发展规划 -->
+                    <div class="fade-in">
+                        <h3 class="text-2xl font-semibold mb-6">未来发展规划</h3>
+                        <div class="space-y-6">
+                            <div class="flex gap-4 items-start">
+                                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-brain text-xl text-primary"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">模型优化</h4>
+                                    <p class="text-dark/70">引入更多自监督学习方法，减少标注数据依赖，进一步提高模型在复杂血管结构下的分割精度</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-cloud text-xl text-primary"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">云端部署</h4>
+                                    <p class="text-dark/70">部署到云平台，提供API服务，支持医疗机构和研究人员远程访问和集成</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-mobile text-xl text-primary"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">移动应用</h4>
+                                    <p class="text-dark/70">开发移动应用版本，支持移动设备拍摄和即时分析，提高使用便捷性</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-heartbeat text-xl text-primary"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-medium mb-2">临床集成</h4>
+                                    <p class="text-dark/70">与电子病历系统集成，支持疾病诊断辅助和治疗效果评估，为临床决策提供支持</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 团队介绍 -->
+                    <div class="fade-in" style="transition-delay: 0.2s;">
+                        <h3 class="text-2xl font-semibold mb-6">团队成员</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <!-- 团队成员 1 -->
+                            <div class="bg-light rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all">
+                                <div class="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 overflow-hidden flex items-center justify-center">
+                                    <i class="fa fa-user text-4xl text-primary"></i>
+                                </div>
+                                <h4 class="text-lg font-medium mb-1">吴宇辰</h4>
+                                <p class="text-primary mb-3">项目负责人/后端开发</p>
+                                <p class="text-dark/70 text-sm">大三学生，对深度学习和Web开发有浓厚兴趣，负责项目整体规划和后端开发</p>
+                            </div>
+                            <!-- 团队成员 2 -->
+                            <div class="bg-light rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all">
+                                <div class="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 overflow-hidden flex items-center justify-center">
+                                    <i class="fa fa-user text-4xl text-primary"></i>
+                                </div>
+                                <h4 class="text-lg font-medium mb-1">吴潇坤</h4>
+                                <p class="text-primary mb-3">算法工程师</p>
+                                <p class="text-dark/70 text-sm">大三学生，专注于深度学习模型研究，负责血管分割算法的设计与实现</p>
+                            </div>
+                            <!-- 团队成员 3 -->
+                            <div class="bg-light rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all">
+                                <div class="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 overflow-hidden flex items-center justify-center">
+                                    <i class="fa fa-user text-4xl text-primary"></i>
+                                </div>
+                                <h4 class="text-lg font-medium mb-1">田景臣</h4>
+                                <p class="text-primary mb-3">前端开发</p>
+                                <p class="text-dark/70 text-sm">大三学生，热衷于用户界面设计，负责系统的前端开发和用户体验优化</p>
+                            </div>
+                            <!-- 团队成员 4 -->
+                            <div class="bg-light rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all">
+                                <div class="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 overflow-hidden flex items-center justify-center">
+                                    <i class="fa fa-user text-4xl text-primary"></i>
+                                </div>
+                                <h4 class="text-lg font-medium mb-1">叶姿含</h4>
+                                <p class="text-primary mb-3">算法工程师</p>
+                                <p class="text-dark/70 text-sm">大三学生，擅长数据分析和机器学习，参与深度学习模型的训练和优化工作</p>
+                            </div>
+                            <!-- 团队成员 5 -->
+                            <div class="bg-light rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all sm:col-span-2">
+                                <div class="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 overflow-hidden flex items-center justify-center">
+                                    <i class="fa fa-user text-4xl text-primary"></i>
+                                </div>
+                                <h4 class="text-lg font-medium mb-1">刘俊杰</h4>
+                                <p class="text-primary mb-3">后端开发</p>
+                                <p class="text-dark/70 text-sm">大三学生，熟悉Web后端技术栈，负责系统架构设计和API开发</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-16 text-center fade-in" style="transition-delay: 0.3s;">
+                    <a href="#upload" class="inline-block px-10 py-5 bg-primary text-white rounded-full font-medium hover:bg-primary/90 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
+                        立即体验 <i class="fa fa-rocket ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">云南大学中医医院 | 眼科医学影像中心</h4>
+                    <p class="text-white/70">基于深度学习的视网膜血管智能分割系统，为眼科疾病诊断提供精准支持</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#features" class="text-white/70 hover:text-primary transition-colors">技术亮点</a></li>
+                        <li><a href="#visualization" class="text-white/70 hover:text-primary transition-colors">数据可视化</a></li>
+                        <li><a href="#upload" class="text-white/70 hover:text-primary transition-colors">分割演示</a></li>
+                        <li><a href="#future" class="text-white/70 hover:text-primary transition-colors">项目展望</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">联系我们</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center text-white/70">
+                            <i class="fa fa-envelope-o mr-2"></i> ophthalmology@bjtcm.com
+                        </li>
+                        <li class="flex items-center text-white/70">
+                            <i class="fa fa-phone mr-2"></i> +86 010-52176677
+                        </li>
+                        <li class="flex items-center text-white/70">
+                            <i class="fa fa-map-marker mr-2"></i> 云南大学
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">关注我们</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-primary transition-colors">
+                            <i class="fa fa-weixin"></i>
+                        </a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-primary transition-colors">
+                            <i class="fa fa-weibo"></i>
+                        </a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-primary transition-colors">
+                            <i class="fa fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 pt-8 border-t border-white/10 text-center text-white/50">
+                <p>&copy; 2023 XX中医医院 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
