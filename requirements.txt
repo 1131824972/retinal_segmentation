@@ -58,7 +58,7 @@ certifi==2025.11.12
 charset-normalizer==3.4.4
 idna==3.11
 six==1.17.0
-
+reportlab
 # ===== 开发/调试 =====
 pytest==7.4.0
 filelock==3.19.1
