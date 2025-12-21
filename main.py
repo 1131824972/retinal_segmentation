@@ -11,6 +11,7 @@ import contextvars  # <--- 新增导入
 from core.config import settings
 from core.database import init_db
 from contextlib import asynccontextmanager
+from api.endpoints import routes_report
 # 导入所有路由
 from api.endpoints import (
     health,
@@ -143,6 +144,7 @@ async def add_request_id(request: Request, call_next):
 
 # 注册路由
 app.include_router(health.router)
+app.include_router(routes_report.router, prefix="/api/v1") # 注册
 # 注册病人接口
 app.include_router(routes_patient.router, prefix="/api/v1")
 
