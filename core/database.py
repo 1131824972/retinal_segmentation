@@ -12,7 +12,7 @@ db = client[DB_NAME]
 # ===== 集合定义 =====
 # 病人集合
 patients_collection = db["patients"]
-
+reports_collection = db["reports"]
 images_collection = db["images"]
 predictions_collection = db["predictions"]
 models_collection = db["models"]
